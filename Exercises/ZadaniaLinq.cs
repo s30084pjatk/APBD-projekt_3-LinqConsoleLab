@@ -201,8 +201,11 @@ public sealed class ZadaniaLinq
     public IEnumerable<string> Zadanie11_PolaczStudentowIZapisy()
     {
         //throw Niezaimplementowano(nameof(Zadanie11_PolaczStudentowIZapisy));
+        // return DaneUczelni.Studenci
+        //     .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => $"{s.Imie}{s.Nazwisko}, {z.DataZapisu:MM/dd/yyyy}");
         return DaneUczelni.Studenci
-            .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => $"{s.Imie}{s.Nazwisko}, {z.DataZapisu:MM/dd/yyyy}");
+            .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId,
+                (s, z) => $"{s.Imie} {s.Nazwisko}, {z.DataZapisu:MM/dd/yyyy}");
     }
 
     /// <summary>
@@ -220,10 +223,15 @@ public sealed class ZadaniaLinq
     {
         //throw Niezaimplementowano(nameof(Zadanie12_ParyStudentPrzedmiot));
 
+        // return DaneUczelni.Studenci
+        //     .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => new { s, z })
+        //     .Join(DaneUczelni.Przedmioty, z => z.z.PrzedmiotId, p => p.Id,
+        //         (z, p) => $"{z.s.Imie},{z.s.Nazwisko},{p.Nazwa}");
+
         return DaneUczelni.Studenci
             .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => new { s, z })
             .Join(DaneUczelni.Przedmioty, z => z.z.PrzedmiotId, p => p.Id,
-                (z, p) => $"{z.s.Imie},{z.s.Nazwisko},{p.Nazwa}");
+                (z, p) => $"{z.s.Imie} {z.s.Nazwisko}, {p.Nazwa}");
     }
 
     /// <summary>
@@ -239,9 +247,12 @@ public sealed class ZadaniaLinq
     public IEnumerable<string> Zadanie13_GrupowanieZapisowWedlugPrzedmiotu()
     {
         //throw Niezaimplementowano(nameof(Zadanie13_GrupowanieZapisowWedlugPrzedmiotu));
+        // return DaneUczelni.Zapisy
+        //     .Join(DaneUczelni.Przedmioty, z => z.PrzedmiotId, p => p.Id,
+        //         (z, p) => new {z,p}).GroupBy(z=>z.p.Nazwa).Select(z=>$"{z.Key}, -> {z.Count()}");
         return DaneUczelni.Zapisy
-            .Join(DaneUczelni.Przedmioty, z => z.PrzedmiotId, p => p.Id,
-                (z, p) => new {z,p}).GroupBy(z=>z.p.Nazwa).Select(z=>$"{z.Key}, -> {z.Count()}");
+            .Join(DaneUczelni.Przedmioty, z => z.PrzedmiotId, p => p.Id, (z, p) => new { z, p }).GroupBy(p => p.p.Nazwa)
+            .Select(p => $"{p.Key}, -> {p.Count()}");
     }
 
     /// <summary>
@@ -259,15 +270,20 @@ public sealed class ZadaniaLinq
     public IEnumerable<string> Zadanie14_SredniaOcenaNaPrzedmiot()
     {
         //throw Niezaimplementowano(nameof(Zadanie14_SredniaOcenaNaPrzedmiot));
-        return DaneUczelni.Przedmioty
-            .Join(DaneUczelni.Zapisy, p => p.Id, z => z.PrzedmiotId, (p, z) => new { p, z })
-            .Where(p => p.z.OcenaKoncowa != null).GroupBy(p => p.p.Nazwa)
-            .Select(p => $"{p.Key}, {p.Average(x=>x.z.OcenaKoncowa.Value):F1}");
-        
-        
-        
-        
-        
+        // return DaneUczelni.Przedmioty
+        //     .Join(DaneUczelni.Zapisy, p => p.Id, z => z.PrzedmiotId, (p, z) => new { p, z })
+        //     .Where(p => p.z.OcenaKoncowa != null).GroupBy(p => p.p.Nazwa)
+        //     .Select(p => $"{p.Key}, {p.Average(x=>x.z.OcenaKoncowa.Value):F1}");
+
+        return DaneUczelni.Zapisy
+            .Join(DaneUczelni.Przedmioty, z => z.PrzedmiotId, p => p.Id, (z, p) => new { z, p })
+            .Where(z => z.z.OcenaKoncowa.HasValue)
+            .GroupBy(p => p.p.Nazwa).Select(x => $"{x.Key}, {x.Average(x => x.z.OcenaKoncowa.Value)}");
+
+
+
+
+
     }
 
     /// <summary>
@@ -283,7 +299,12 @@ public sealed class ZadaniaLinq
     /// </summary>
     public IEnumerable<string> Zadanie15_ProwadzacyILiczbaPrzedmiotow()
     {
-        throw Niezaimplementowano(nameof(Zadanie15_ProwadzacyILiczbaPrzedmiotow));
+        //throw Niezaimplementowano(nameof(Zadanie15_ProwadzacyILiczbaPrzedmiotow));
+        return DaneUczelni.Prowadzacy
+            .Join(DaneUczelni.Przedmioty, prowadzacy => prowadzacy.Id, przedmiot => przedmiot.ProwadzacyId,
+                (prowadzacy, przedmiot)
+                    => new { prowadzacy, przedmiot }).GroupBy(p => new {p.prowadzacy.Imie, p.prowadzacy.Nazwisko}).Select(x
+                => $"{x.Key.Imie} {x.Key.Nazwisko} -> prowadzi {x.Count()} przedmiotów");
     }
 
     /// <summary>
@@ -300,7 +321,19 @@ public sealed class ZadaniaLinq
     /// </summary>
     public IEnumerable<string> Zadanie16_NajwyzszaOcenaKazdegoStudenta()
     {
-        throw Niezaimplementowano(nameof(Zadanie16_NajwyzszaOcenaKazdegoStudenta));
+       //throw Niezaimplementowano(nameof(Zadanie16_NajwyzszaOcenaKazdegoStudenta));
+       // return DaneUczelni.Studenci
+       //     .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => new { s, z })
+       //     .Join(DaneUczelni.Przedmioty, s => s.z.PrzedmiotId, p => p.Id, (s, p) => new { s, p })
+       //     .Where(x => x.s.z.OcenaKoncowa != null)
+       //     .Select(x => $"{x.s.s.Imie} {x.s.s.Nazwisko}, {x.s.z.OcenaKoncowa}");
+
+       return DaneUczelni.Studenci
+           .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => new { s, z })
+           .Where(z => z.z.OcenaKoncowa.HasValue)
+           .GroupBy(x => new { x.s.Imie, x.s.Nazwisko })
+           .Select(c => $"{c.Key.Imie} {c.Key.Nazwisko}, {c.Max(x => x.z.OcenaKoncowa.Value)}");
+
     }
 
     /// <summary>
@@ -318,7 +351,13 @@ public sealed class ZadaniaLinq
     /// </summary>
     public IEnumerable<string> Wyzwanie01_StudenciZWiecejNizJednymAktywnymPrzedmiotem()
     {
-        throw Niezaimplementowano(nameof(Wyzwanie01_StudenciZWiecejNizJednymAktywnymPrzedmiotem));
+        //throw Niezaimplementowano(nameof(Wyzwanie01_StudenciZWiecejNizJednymAktywnymPrzedmiotem));
+        return DaneUczelni.Studenci
+            .Join(DaneUczelni.Zapisy, s => s.Id, z => z.StudentId, (s, z) => new { s, z })
+            .Where(z => z.z.CzyAktywny)
+            .GroupBy(x => new { x.s.Imie, x.s.Nazwisko })
+            .Where(g=>g.Count(x=>x.z.CzyAktywny)>1)
+            .Select(x => $"{x.Key.Imie} {x.Key.Nazwisko}, {x.Count(zx => zx.z.CzyAktywny)}");
     }
 
     /// <summary>
